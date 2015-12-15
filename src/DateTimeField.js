@@ -87,7 +87,7 @@ export default class DateTimeField extends Component {
     return this.setState(state);
   }
 
-  formatValueForEvent(eventName, event) {
+  formatValueForEvent(eventCallback, event) {
     const value = event.target == null ? event : event.target.value;
 
     this.setIsValid(this.checkIsValid(value));
@@ -101,9 +101,10 @@ export default class DateTimeField extends Component {
     return this.setState({
       inputValue: value
     }, function() {
-      return this.props[eventName](moment(this.state.inputValue, this.state.inputFormat, true).format(this.props.format), value);
+      if (this.props[eventCallback]) {
+        return this.props[eventCallback](moment(this.state.inputValue, this.state.inputFormat, true).format(this.props.format), value);
+      }
     });
-
   }
 
   onChange = event => {
@@ -307,7 +308,6 @@ export default class DateTimeField extends Component {
     }, function() {
       this.closePicker();
       this.props.onChange(today);
-      console.log(this.state.selectedDate)
       return this.setState({
         inputValue: this.state.selectedDate.format(this.resolvePropsInputFormat())
       });
@@ -380,10 +380,22 @@ export default class DateTimeField extends Component {
     }
   }
 
+  syntheticInputBlur() {
+    for(const refKey in this.refs) {
+      const ref = ReactDOM.findDOMNode(this.refs[refKey]);
+      if (ref.type === 'text') {
+        ref.blur();
+      }
+    }
+  }
+
   closePicker = () => {
     let style = {...this.state.widgetStyle};
     style.left = -9999;
     style.display = "block";
+
+    this.syntheticInputBlur();
+    
     return this.setState({
       showPicker: false,
       widgetStyle: style
@@ -457,7 +469,7 @@ export default class DateTimeField extends Component {
                   calculatePosition={this.calculatePosition}
             />
             <div className={classnames("input-group date " + this.size(), {"has-error": !this.state.isValid})} ref="datetimepicker">
-              <input className="form-control" onChange={this.onChange} onBlur={this.onBlur} type="text" value={this.state.inputValue} {...this.props.inputProps} ref={this.props.inputRef} placeholder={this.props.defaultText}/>
+              <input className="form-control" onClick={this.onClick} onChange={this.onChange} onBlur={this.onBlur} type="text" value={this.state.inputValue} {...this.props.inputProps} ref={this.props.inputRef} placeholder={this.props.defaultText}/>
               <span className="input-group-addon" onBlur={this.onBlur} onClick={this.onClick} ref="dtpbutton">
                 <span className={classnames("glyphicon", this.state.buttonIcon)} />
               </span>
